@@ -7474,6 +7474,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oscilloscope"
+version = "0.9.0"
+dependencies = [
+ "anyhow",
+ "gpui-kit",
+]
+
+[[package]]
 name = "outref"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
