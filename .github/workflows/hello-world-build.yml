@@ -26,14 +26,10 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      # Replaces the system `ld` on Linux, speeds up linking.
-      - uses: rui314/setup-mold@v1
-
-      - name: Install system dependencies
-        run: script/bootstrap
-
-      - name: Install headless display, software Vulkan renderer and fonts
-        run: sudo apt-get install -y xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
+      - name: Install system deps, mold linker, headless display, software Vulkan, fonts
+        run: |
+          script/bootstrap
+          sudo apt-get install -y mold xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
 
       - name: Build hello_world
         run: cargo build --locked -p hello_world
@@ -87,13 +83,10 @@ jobs:
 
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - uses: rui314/setup-mold@v1
-
-      - name: Install system dependencies
-        run: script/bootstrap
-
-      - name: Install headless display, software Vulkan renderer and fonts
-        run: sudo apt-get install -y xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
+      - name: Install system deps, mold linker, headless display, software Vulkan, fonts
+        run: |
+          script/bootstrap
+          sudo apt-get install -y mold xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
 
       - name: Build story
         run: cargo build --locked -p gpui-component-story
