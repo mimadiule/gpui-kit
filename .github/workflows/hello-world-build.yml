@@ -78,3 +78,63 @@ jobs:
         with:
           name: hello-world-windows-exe
           path: target/debug/hello_world.exe
+
+  linux-story:
+    name: Linux story (build + screenshot)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - uses: rui314/setup-mold@v1
+
+      - name: Install system dependencies
+        run: script/bootstrap
+
+      - name: Install headless display, software Vulkan renderer and fonts
+        run: sudo apt-get install -y xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
+
+      - name: Build story
+        run: cargo build --locked -p gpui-component-story
+
+      - name: Run chart story under Xvfb and capture a screenshot
+        run: |
+          Xvfb :99 -screen 0 1600x900x24 -nolisten tcp &
+          sleep 2
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./target/debug/gpui-component-story chart &
+          APP_PID=$!
+          sleep 30
+          import -display :99 -window root story_screenshot.png
+          kill "$APP_PID" || true
+
+      - name: Upload Linux story binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-linux-binary
+          path: target/debug/gpui-component-story
+
+      - name: Upload story screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-screenshot
+          path: story_screenshot.png
+
+  windows-story:
+    name: Windows story (build exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build story
+        run: cargo build --locked -p gpui-component-story
+
+      - name: Upload Windows story exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-windows-exe
+          path: target/debug/gpui-component-story.exe
