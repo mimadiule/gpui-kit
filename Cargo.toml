@@ -15,6 +15,7 @@ members = [
     "examples/app_assets",
     "examples/fps_monitor",
     "examples/hello_world",
+    "examples/oscilloscope",
     "examples/input",
     "examples/editor",
     "examples/syntect",
