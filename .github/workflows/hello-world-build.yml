@@ -11,6 +11,10 @@ concurrency:
 
 env:
   CARGO_PROFILE_DEV_DEBUG: 0
+  # gpui-pre embeds shader bytecode only when debug_assertions is off; debug
+  # builds otherwise read HLSL from the build machine's source path at runtime
+  # and crash with os error 3 on any other machine.
+  CARGO_PROFILE_DEV_DEBUG_ASSERTIONS: false
   CARGO_TERM_COLOR: always
 
 jobs:
