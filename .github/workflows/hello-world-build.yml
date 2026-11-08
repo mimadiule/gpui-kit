@@ -131,3 +131,72 @@ jobs:
         with:
           name: story-windows-exe
           path: target/debug/gpui-component-story.exe
+
+  oscilloscope-linux:
+    name: Linux oscilloscope (build + screenshots)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install system deps, mold linker, headless display, software Vulkan, fonts
+        run: |
+          script/bootstrap
+          sudo apt-get install -y mold xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
+
+      - name: Build oscilloscope (debug + release)
+        run: |
+          cargo build --locked -p oscilloscope
+          cargo build --locked --release -p oscilloscope
+
+      - name: Screenshot debug build under Xvfb
+        run: |
+          Xvfb :99 -screen 0 1600x900x24 -nolisten tcp &
+          sleep 2
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./target/debug/oscilloscope &
+          APP_PID=$!
+          sleep 20
+          import -display :99 -window root oscilloscope_debug_screenshot.png
+          kill "$APP_PID" || true
+
+      - name: Screenshot release build under Xvfb
+        run: |
+          Xvfb :99 -screen 0 1600x900x24 -nolisten tcp &
+          sleep 2
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./target/release/oscilloscope &
+          APP_PID=$!
+          sleep 20
+          import -display :99 -window root oscilloscope_release_screenshot.png
+          kill "$APP_PID" || true
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscilloscope-linux-screenshots
+          path: oscilloscope_*_screenshot.png
+
+  oscilloscope-windows:
+    name: Windows oscilloscope (build exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build oscilloscope (debug + release)
+        run: |
+          cargo build --locked -p oscilloscope
+          cargo build --locked --release -p oscilloscope
+
+      - name: Upload Windows exes
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscilloscope-windows-exes
+          path: |
+            target/debug/oscilloscope.exe
+            target/release/oscilloscope.exe
