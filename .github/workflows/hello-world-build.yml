@@ -1,0 +1,76 @@
+name: Hello World Build
+
+on:
+  push:
+    branches: [hello-world]
+  workflow_dispatch:
+
+concurrency:
+  group: hello-world-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  linux:
+    name: Linux (build + screenshot)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      # Replaces the system `ld` on Linux, speeds up linking.
+      - uses: rui314/setup-mold@v1
+
+      - name: Install system dependencies
+        run: script/bootstrap
+
+      - name: Install headless display, software Vulkan renderer and fonts
+        run: sudo apt-get install -y xvfb mesa-vulkan-drivers imagemagick x11-apps fonts-dejavu-core
+
+      - name: Build hello_world
+        run: cargo build --locked -p hello_world
+
+      - name: Run under Xvfb and capture a screenshot
+        run: |
+          Xvfb :99 -screen 0 1600x900x24 -nolisten tcp &
+          sleep 2
+          export DISPLAY=:99
+          export LIBGL_ALWAYS_SOFTWARE=1
+          ./target/debug/hello_world &
+          APP_PID=$!
+          sleep 20
+          import -display :99 -window root hello_world_screenshot.png
+          kill "$APP_PID" || true
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-world-linux-binary
+          path: target/debug/hello_world
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-world-screenshot
+          path: hello_world_screenshot.png
+
+  windows:
+    name: Windows (build exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build hello_world
+        run: cargo build --locked -p hello_world
+
+      - name: Upload Windows exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-world-windows-exe
+          path: target/debug/hello_world.exe
